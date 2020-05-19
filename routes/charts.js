@@ -3,16 +3,20 @@ const router = express.Router();
 
 const cors = require('cors');
 const {ObjectID, MongoClient} = require('mongodb');
-const {connectionString} = require('../config/inf');
+const {DB_URL} = require('../config/inf');
+
+const DB_NAME = 'charts';
+const COLLECTION_NAME = 'chartInf';
+
 
 /**
  * 创建报表
  */
 const postHandler = (req, res, next) => {
-    MongoClient.connect(connectionString, {useUnifiedTopology: true})
+    MongoClient.connect(DB_URL, {useUnifiedTopology: true})
         .then(client => {
-            const db = client.db('charts-test');
-            const chartInf = db.collection('chartInf');
+            const db = client.db(DB_NAME);
+            const chartInf = db.collection(COLLECTION_NAME);
             chartInf.insertOne(req.body).then(result => {
                 res.json(handler(true, {id: result.insertedId}, '保存'));
             }).catch(err => {
@@ -28,10 +32,10 @@ const postHandler = (req, res, next) => {
  * @param id [''|string]
  */
 const getHandler = (req, res, next) => {
-    MongoClient.connect(connectionString, {useUnifiedTopology: true})
+    MongoClient.connect(DB_URL, {useUnifiedTopology: true})
         .then(client => {
-            const db = client.db('charts-test');
-            const chartInf = db.collection('chartInf');
+            const db = client.db(DB_NAME);
+            const chartInf = db.collection(COLLECTION_NAME);
             chartInf.find(isId(req.query.id) ? ObjectID(req.query.id) : '').toArray().then(result => {
                     res.json(handler(true, result.map(item => {
                         item.id = item._id;
@@ -49,10 +53,10 @@ const getHandler = (req, res, next) => {
  * @param id [array]
  */
 const deleteHandler = (req, res, next) => {
-    MongoClient.connect(connectionString, {useUnifiedTopology: true})
+    MongoClient.connect(DB_URL, {useUnifiedTopology: true})
         .then(client => {
-            const db = client.db('charts-test');
-            const chartInf = db.collection('chartInf');
+            const db = client.db(DB_NAME);
+            const chartInf = db.collection(COLLECTION_NAME);
             if (isId(req.query.id)) {
                 chartInf.deleteOne({_id: ObjectID(req.query.id)}).then(result => {
                         res.json(handler(true, '删除'));
@@ -70,13 +74,19 @@ const deleteHandler = (req, res, next) => {
  * @param id [string]
  */
 const updateHandler = (req, res, next) => {
-    MongoClient.connect(connectionString, {useUnifiedTopology: true})
+    MongoClient.connect(DB_URL, {useUnifiedTopology: true})
         .then(client => {
-            const db = client.db('charts-test');
-            const chartInf = db.collection('chartInf');
-            const id = req.query.id;
-            if (isId(req.query.id)) {
-                chartInf.update(ObjectID(id)).then(result => {
+            const db = client.db(DB_NAME);
+            const chartInf = db.collection(COLLECTION_NAME);
+            const id = req.body.id;
+            console.log(id);
+            if (isId(id)) {
+                const {id, ...updateFields} = req.body;
+                chartInf.updateOne(
+                    {_id: ObjectID(id)},
+                    {
+                        $set: {...updateFields}
+                    }).then(result => {
                         res.json(handler(true, '更新'));
                     }
                 ).catch(err => res.json(handler(false, err))).finally(() => client.close());
@@ -114,7 +124,7 @@ function handler(success, data, message) {
 }
 
 function isId(id) {
-    if (id.length === 12 || id.length === 24) {
+    if (id && (id.length === 12 || id.length === 24)) {
         return true;
     }
     return false;
