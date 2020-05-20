@@ -1,7 +1,72 @@
 doctype html
 html
-  head
-    title= title
-    link(rel='stylesheet', href='/stylesheets/style.css')
-  body
-    block content
+    head
+        title= name
+        style.
+            html, body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .container {
+                position: relative;
+                height: 100%;
+                display: flex;
+                flex-wrap: wrap;
+                box-sizing: border-box;
+            }
+
+            .cell {
+                position: absolute;
+                box-sizing: border-box;
+            }
+
+            iframe {
+                border: none;
+            }
+    body
+        block content
+        script.
+            function getQueryParams() {
+                var params = location.search.replace(/^\?/, '').split('&');
+                var data = {};
+                params.forEach(function (p) {
+                    var value = p.split('=');
+                    data[value[0]] = value[1];
+                })
+                return data;
+            }
+            var tokenId = getQueryParams().tokenId;
+
+            if (tokenId) {
+                fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardtokenservice/GetToken', {
+                    body: new URLSearchParams('tokenId=' + tokenId),
+                    method: 'POST',
+                    mode: 'cors',
+                })
+                    .then(function (response) {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                    })
+                    .then(function (res) {
+                        if (res.Success) {
+                            var ifrs = document.getElementsByTagName('iframe');
+                            [].slice.apply(ifrs).forEach(function (ifr) {
+                                console.log('token', res.Extra.TOKEN)
+                                ifr.contentWindow.postMessage(res.Extra.TOKEN, ifr.src.split('/#')[0]);
+                                // ifr.onload = function () {
+                                //     console.log('token', res.Extra.TOKEN)
+                                //     ifr.contentWindow.postMessage(res.Extra.TOKEN, ifr.src.split('/#')[0]);
+                                // }
+                            })
+                        } else {
+                            console.log(res.Message);
+                        }
+                    })
+                    .catch(function (error) {
+                        console.log('There has been a problem with your fetch operation: ', error.message);
+                    })
+            } else {
+                console.warn('must need tokenId to get token from serve!');
+            }

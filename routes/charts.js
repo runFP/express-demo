@@ -5,6 +5,8 @@ const cors = require('cors');
 const {ObjectID, MongoClient} = require('mongodb');
 const {DB_URL} = require('../config/inf');
 
+const {resultHandler} = require('../util/util');
+
 const DB_NAME = 'charts';
 const COLLECTION_NAME = 'chartInf';
 
@@ -18,12 +20,11 @@ const postHandler = (req, res, next) => {
             const db = client.db(DB_NAME);
             const chartInf = db.collection(COLLECTION_NAME);
             chartInf.insertOne(req.body).then(result => {
-                res.json(handler(true, {id: result.insertedId}, '保存'));
+                res.json(resultHandler(true, {id: result.insertedId}, '保存'));
             }).catch(err => {
                 console.log(err);
-                res.json(handler(false, err));
+                res.json(resultHandler(false, err));
             }).finally(() => client.close());
-
         })
 };
 
@@ -37,13 +38,13 @@ const getHandler = (req, res, next) => {
             const db = client.db(DB_NAME);
             const chartInf = db.collection(COLLECTION_NAME);
             chartInf.find(isId(req.query.id) ? ObjectID(req.query.id) : '').toArray().then(result => {
-                    res.json(handler(true, result.map(item => {
+                    res.json(resultHandler(true, result.map(item => {
                         item.id = item._id;
                         delete item._id;
                         return item;
                     }), '返回'));
                 }
-            ).catch(err => res.json(handler(false, err))).finally(() => client.close());
+            ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
         })
 };
 
@@ -59,11 +60,11 @@ const deleteHandler = (req, res, next) => {
             const chartInf = db.collection(COLLECTION_NAME);
             if (isId(req.query.id)) {
                 chartInf.deleteOne({_id: ObjectID(req.query.id)}).then(result => {
-                        res.json(handler(true, '删除'));
+                        res.json(resultHandler(true, '删除'));
                     }
-                ).catch(err => res.json(handler(false, err))).finally(() => client.close());
+                ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
             } else {
-                res.json(handler(false, '删除'));
+                res.json(resultHandler(false, '删除'));
                 client.close();
             }
         })
@@ -87,11 +88,11 @@ const updateHandler = (req, res, next) => {
                     {
                         $set: {...updateFields}
                     }).then(result => {
-                        res.json(handler(true, '更新'));
+                        res.json(resultHandler(true, '更新'));
                     }
-                ).catch(err => res.json(handler(false, err))).finally(() => client.close());
+                ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
             } else {
-                res.json(handler(false, '更新'));
+                res.json(resultHandler(false, '更新'));
                 client.close();
             }
         })
@@ -105,23 +106,6 @@ router.use(cors())
     .delete('/', deleteHandler);
 
 
-/**
- * 返回响应格式
- * @param success
- * @param data
- * @param message
- * @return {{success: boolean, data: null, message: string}}
- */
-function handler(success, data, message) {
-    if (arguments.length === 12) {
-        message = data;
-    }
-    return {
-        success: success ? true : false,
-        data: success ? data : null,
-        message: success ? `${message}成功` : `失败:${message}`
-    };
-}
 
 function isId(id) {
     if (id && (id.length === 12 || id.length === 24)) {
