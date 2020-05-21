@@ -27,6 +27,7 @@ html
     body
         block content
         script.
+            var adminToken = '!{token}';
             function getQueryParams() {
                 var params = location.search.replace(/^\?/, '').split('&');
                 var data = {};
@@ -37,6 +38,18 @@ html
                 return data;
             }
             var tokenId = getQueryParams().tokenId;
+
+            function postMessage(token) {
+                var ifrs = document.getElementsByTagName('iframe');
+                [].slice.apply(ifrs).forEach(function (ifr, index) {
+                    ifr.onload = function () {
+                        ifr.contentWindow.postMessage(JSON.stringify({
+                            token: token,
+                            id: index,
+                        }), ifr.src.split('/#')[0]);
+                    }
+                })
+            }
 
             if (tokenId) {
                 fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardtokenservice/GetToken', {
@@ -51,15 +64,7 @@ html
                     })
                     .then(function (res) {
                         if (res.Success) {
-                            var ifrs = document.getElementsByTagName('iframe');
-                            [].slice.apply(ifrs).forEach(function (ifr) {
-                                console.log('token', res.Extra.TOKEN)
-                                ifr.contentWindow.postMessage(res.Extra.TOKEN, ifr.src.split('/#')[0]);
-                                // ifr.onload = function () {
-                                //     console.log('token', res.Extra.TOKEN)
-                                //     ifr.contentWindow.postMessage(res.Extra.TOKEN, ifr.src.split('/#')[0]);
-                                // }
-                            })
+                            postMessage(res.Extra.TOKEN)
                         } else {
                             console.log(res.Message);
                         }
@@ -68,5 +73,9 @@ html
                         console.log('There has been a problem with your fetch operation: ', error.message);
                     })
             } else {
-                console.warn('must need tokenId to get token from serve!');
+                if (adminToken) {
+                    postMessage(adminToken);
+                } else {
+                    console.warn('must need tokenId to get token from serve!');
+                }
             }
