@@ -43,10 +43,10 @@ html
                 var ifrs = document.getElementsByTagName('iframe');
                 [].slice.apply(ifrs).forEach(function (ifr, index) {
                     ifr.onload = function () {
-                        ifr.contentWindow.postMessage(JSON.stringify({
+                        ifr.contentWindow.postMessage({
                             token: token,
                             id: index,
-                        }), ifr.src.split('/#')[0]);
+                        }, ifr.src.split('/#')[0]);
                     }
                 })
             }

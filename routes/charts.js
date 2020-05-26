@@ -35,19 +35,36 @@ const postHandler = (req, res, next) => {
 const getHandler = (req, res, next) => {
     MongoClient.connect(DB_URL, {useUnifiedTopology: true})
         .then(client => {
-            const db = client.db(DB_NAME);
-            const chartInf = db.collection(COLLECTION_NAME);
-            chartInf.find(isId(req.query.id) ? ObjectID(req.query.id) : '').toArray().then(result => {
-                    res.json(resultHandler(true, result.map(item => {
-                        item.id = item._id;
-                        delete item._id;
-                        return item;
-                    }), '返回'));
+                const db = client.db(DB_NAME);
+                const chartInf = db.collection(COLLECTION_NAME);
+                if (isId(req.query.id)) {
+                    try {
+                        let query = '';
+                        if (Object.keys(req.query).length !== 0) {
+                            if (Array.isArray(req.query.id)) {
+                                query = {$in: req.query.id.map(id => ObjectID(id))};
+                            } else {
+                                query = {$in: [ObjectID(req.query.id)]};
+                            }
+                            query = {_id: query};
+                        }
+                        chartInf.find(query).toArray().then(result => {
+                                res.json(resultHandler(true, result.map(item => {
+                                    item.id = item._id;
+                                    delete item._id;
+                                    return item;
+                                }), '返回'));
+                            }
+                        ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
+                    } catch (e) {
+                        console.log(e.message);
+                    }
+                } else {
+                    res.json(resultHandler(false, 'id格式错误'));
                 }
-            ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
-        })
+            }
+        )
 };
-
 
 /**
  * 删除报表
@@ -59,12 +76,16 @@ const deleteHandler = (req, res, next) => {
             const db = client.db(DB_NAME);
             const chartInf = db.collection(COLLECTION_NAME);
             if (isId(req.query.id)) {
-                chartInf.deleteOne({_id: ObjectID(req.query.id)}).then(result => {
-                        res.json(resultHandler(true, '删除'));
-                    }
-                ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
+                try {
+                    chartInf.deleteOne({_id: ObjectID(req.query.id)}).then(result => {
+                            res.json(resultHandler(true, '删除'));
+                        }
+                    ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
+                } catch (e) {
+                    console.log(e);
+                }
             } else {
-                res.json(resultHandler(false, '删除'));
+                res.json(resultHandler(false, 'id格式错误'));
                 client.close();
             }
         })
@@ -80,19 +101,22 @@ const updateHandler = (req, res, next) => {
             const db = client.db(DB_NAME);
             const chartInf = db.collection(COLLECTION_NAME);
             const id = req.body.id;
-            console.log(id);
             if (isId(id)) {
                 const {id, ...updateFields} = req.body;
-                chartInf.updateOne(
-                    {_id: ObjectID(id)},
-                    {
-                        $set: {...updateFields}
-                    }).then(result => {
-                        res.json(resultHandler(true, '更新'));
-                    }
-                ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
+                try {
+                    chartInf.updateOne(
+                        {_id: ObjectID(id)},
+                        {
+                            $set: {...updateFields}
+                        }).then(result => {
+                            res.json(resultHandler(true, '更新'));
+                        }
+                    ).catch(err => res.json(resultHandler(false, err))).finally(() => client.close());
+                } catch (e) {
+                    console.log(e);
+                }
             } else {
-                res.json(resultHandler(false, '更新'));
+                res.json(resultHandler(false, 'id格式错误'));
                 client.close();
             }
         })
@@ -106,9 +130,14 @@ router.use(cors())
     .delete('/', deleteHandler);
 
 
-
+/**
+ * 空值和符合格式的id均返回true
+ * @param id
+ * @return {boolean}
+ */
 function isId(id) {
-    if (id && (id.length === 12 || id.length === 24)) {
+    console.log(id);
+    if ((id && (id.length === 12 || id.length === 24)) || id === undefined || Array.isArray(id)) {
         return true;
     }
     return false;
