@@ -1,0 +1,58 @@
+<!DOCTYPE html><html><head><title>fp3333</title><style>html, body {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+.cell {
+    position: absolute;
+    box-sizing: border-box;
+}
+
+iframe {
+    border: none;
+}</style></head><body><script>function postMessage(token) {
+    var ifrs = document.getElementsByTagName('iframe');
+    [].slice.apply(ifrs).forEach(function (ifr, index) {
+        ifr.onload = function () {
+            ifr.contentWindow.postMessage({
+                token: token,
+                id: index,
+            }, ifr.src.split('/#')[0]);
+        }
+    })
+}</script><script>var adminToken = 'eyJVc2VyTmFtZSI6InpvbmdocCIsIlNvdXJjZUFkZHJlc3MiOiI6OmZmZmY6MTAuNzQuMTUyLjgiLCJFbmFibGVFeHBpcmVUaW1lIjp0cnVlLCJMYXN0QWNjZXNzVGltZSI6IjIwMjAtMDYtMDEgMDk6NTI6NTEiLCJFeHBpcmVUaW1lIjoiMjAyMC0wNi0wMSAxMDo1Mjo1MSJ9';
+
+fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardfileservice/GetDigitalWebServer')
+    .then(function (response) {
+        if (response.ok) return response.json();
+    })
+    .then(function (res) {
+        if (res.Success) {
+            var ifrs = document.getElementsByTagName('iframe');
+            [].slice.apply(ifrs).forEach(function (ifr) {
+                var local = 'http://localhost:4200';
+                ifr.src = decodeURIComponent(ifr.src).replace('[$serverHost$]'.toLocaleLowerCase(), local.replace('http://', ''));
+                // ifr.src = decodeURIComponent(ifr.src).replace('[$serverHost$]'.toLocaleLowerCase(), res.Extra.replace('http://', ''));
+            })
+            return true;
+        } else {
+            return false;
+        }
+    })
+    .then(function (res) {
+        if (res) {
+            if (adminToken) {
+                postMessage(adminToken);
+            } else {
+                console.warn('must need tokenId to get token from serve!');
+            }
+        }
+    })</script></body></html>

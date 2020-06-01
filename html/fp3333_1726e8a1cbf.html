@@ -1,0 +1,59 @@
+<!DOCTYPE html><html><head><title>fp3333</title><style>html, body {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+}
+
+.cell {
+    position: absolute;
+    box-sizing: border-box;
+}
+
+iframe {
+    border: none;
+}</style></head><body><div class="cell" style="top: 0%;width: 33.333333333333336%;left: 0%;height: 33.333333333333336%;"><iframe width="100%" height="100%" src="[$serverHost$]/#/widgets/AnalysisComponent/5ec223e99477ca3198b5476e" scrolling="no"></iframe></div><div class="cell" style="top: 0%;width: 33.333333333333336%;left: 33.333333333333336%;height: 33.333333333333336%;"></div><div class="cell" style="top: 0%;width: 33.333333333333336%;left: 66.66666666666667%;height: 33.333333333333336%;"></div><div class="cell" style="top: 33.333333333333336%;width: 33.333333333333336%;left: 0%;height: 33.333333333333336%;"></div><div class="cell" style="top: 33.333333333333336%;width: 33.333333333333336%;left: 33.333333333333336%;height: 33.333333333333336%;"></div><div class="cell" style="top: 33.333333333333336%;width: 33.333333333333336%;left: 66.66666666666667%;height: 33.333333333333336%;"></div><div class="cell" style="top: 66.66666666666667%;width: 33.333333333333336%;left: 0%;height: 33.333333333333336%;"></div><div class="cell" style="top: 66.66666666666667%;width: 33.333333333333336%;left: 33.333333333333336%;height: 33.333333333333336%;"></div><div class="cell" style="top: 66.66666666666667%;width: 33.333333333333336%;left: 66.66666666666667%;height: 33.333333333333336%;"></div><script>function postMessage(token) {
+    var ifrs = document.getElementsByTagName('iframe');
+    [].slice.apply(ifrs).forEach(function (ifr, index) {
+        ifr.onload = function () {
+            ifr.contentWindow.postMessage({
+                token: token,
+                id: index,
+            }, ifr.src.split('/#')[0]);
+        }
+    })
+}</script><!-- 保存--><script>var adminToken = '';
+
+fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardfileservice/GetDigitalWebServer')
+    .then(function (response) {
+        if (response.ok) return response.json();
+    })
+    .then(function (res) {
+        debugger
+        if (res.Success) {
+            var ifrs = document.getElementsByTagName('iframe');
+            [].slice.apply(ifrs).forEach(function (ifr) {
+                var local = 'http://localhost:4200';
+                ifr.src = decodeURIComponent(ifr.src).replace('[$serverHost$]'.toLocaleLowerCase(), local.replace('http://', ''));
+                // ifr.src = decodeURIComponent(ifr.src).replace('[$serverHost$]'.toLocaleLowerCase(), res.Extra.replace('http://', ''));
+            })
+            return true;
+        } else {
+            return false;
+        }
+    })
+    .then(function (res) {
+        if (res) {
+            if (adminToken) {
+                postMessage(adminToken);
+            } else {
+                console.warn('must need tokenId to get token from serve!');
+            }
+        }
+    })</script></body></html>

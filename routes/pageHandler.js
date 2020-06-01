@@ -13,15 +13,20 @@ const postHandler = (req, res, next) => {
     console.log(req.body);
     if (htmlStr && name) {
         res.render('index', {htmlStr, name, token}, (err, html) => {
-            fs.writeFile(url.format({
-                pathname: path.join(__dirname, `../html/${name}_${(new Date).getTime().toString(16)}.html`),
-            }), html, err => {
-                if (err) {
-                    res.json(resultHandler(false, '页面创建'));
-                } else {
-                    res.json(resultHandler(true, {html}, '页面创建'));
-                }
-            });
+            if(err){
+                res.json(resultHandler(false, '页面创建'));
+            }else{
+                res.json(resultHandler(true, {html}, '页面创建'));
+            }
+            // fs.writeFile(url.format({
+            //     pathname: path.join(__dirname, `../html/${name}_${(new Date).getTime().toString(16)}.html`),
+            // }), html, err => {
+            //     if (err) {
+            //         res.json(resultHandler(false, '页面创建'));
+            //     } else {
+            //         res.json(resultHandler(true, {html}, '页面创建'));
+            //     }
+            // });
         });
     } else {
         res.json(resultHandler(false, 'htmlStr或者name参数不能为空'));

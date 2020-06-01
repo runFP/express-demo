@@ -26,19 +26,8 @@ html
             }
     body
         block content
+        - var isSave = !token
         script.
-            var adminToken = '!{token}';
-            function getQueryParams() {
-                var params = location.search.replace(/^\?/, '').split('&');
-                var data = {};
-                params.forEach(function (p) {
-                    var value = p.split('=');
-                    data[value[0]] = value[1];
-                })
-                return data;
-            }
-            var tokenId = getQueryParams().tokenId;
-
             function postMessage(token) {
                 var ifrs = document.getElementsByTagName('iframe');
                 [].slice.apply(ifrs).forEach(function (ifr, index) {
@@ -50,32 +39,73 @@ html
                     }
                 })
             }
+        //- 保存
+        if isSave
+            script.
+                function getQueryParams() {
+                    var params = location.search.replace(/^\?/, '').split('&');
+                    var data = {};
+                    params.forEach(function (p) {
+                        var value = p.split('=');
+                        data[value[0]] = value[1];
+                    })
+                    return data;
+                }
+                var tokenId = getQueryParams().tokenId;
 
-            if (tokenId) {
-                fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardtokenservice/GetToken', {
-                    body: new URLSearchParams('tokenId=' + tokenId),
-                    method: 'POST',
-                    mode: 'cors',
-                })
-                    .then(function (response) {
-                        if (response.ok) {
-                            return response.json();
-                        }
+                if (tokenId) {
+                    fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardtokenservice/GetToken', {
+                        body: new URLSearchParams('tokenId=' + tokenId),
+                        method: 'POST',
+                        mode: 'cors',
                     })
-                    .then(function (res) {
-                        if (res.Success) {
-                            postMessage(res.Extra.TOKEN)
-                        } else {
-                            console.log(res.Message);
-                        }
-                    })
-                    .catch(function (error) {
-                        console.log('There has been a problem with your fetch operation: ', error.message);
-                    })
-            } else {
-                if (adminToken) {
-                    postMessage(adminToken);
+                        .then(function (response) {
+                            if (response.ok) return response.json();
+                        })
+                        .then(function (res) {
+                            if (res.Success) {
+                                postMessage(res.Extra.TOKEN)
+                            } else {
+                                console.log(res.Message);
+                            }
+                        })
+                        .catch(function (error) {
+                            console.log('There has been a problem with your fetch operation: ', error.message);
+                        })
                 } else {
                     console.warn('must need tokenId to get token from serve!');
                 }
-            }
+        else
+            script.
+                var adminToken = '!{token}';
+
+                fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardfileservice/GetDigitalWebServer')
+                    .then(function (response) {
+                        if (response.ok) return response.json();
+                    })
+                    .then(function (res) {
+                        if (res.Success) {
+                            var ifrs = document.getElementsByTagName('iframe');
+                            [].slice.apply(ifrs).forEach(function (ifr) {
+                                var local = 'http://localhost:4200';
+                                ifr.src = decodeURIComponent(ifr.src).replace('[$serverHost$]'.toLocaleLowerCase(), local.replace('http://', ''));
+                                // ifr.src = decodeURIComponent(ifr.src).replace('[$serverHost$]'.toLocaleLowerCase(), res.Extra.replace('http://', ''));
+                            })
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    })
+                    .then(function (res) {
+                        if (res) {
+                            if (adminToken) {
+                                postMessage(adminToken);
+                            } else {
+                                console.warn('must need tokenId to get token from serve!');
+                            }
+                        }
+                    })
+
+
+
+
