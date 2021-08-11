@@ -54,7 +54,7 @@ html
                 var tokenId = getQueryParams().tokenId;
 
                 if (tokenId) {
-                    fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardtokenservice/GetToken', {
+                    fetch('http://xxx.xxx.xxx:xxx/afs/serverbasedigital/boardtokenservice/GetToken', {
                         body: new URLSearchParams('tokenId=' + tokenId),
                         method: 'POST',
                         mode: 'cors',
@@ -79,7 +79,7 @@ html
             script.
                 var adminToken = '!{token}';
 
-                fetch('http://10.16.40.172:8002/afs/serverbasedigital/boardfileservice/GetDigitalWebServer')
+                fetch('http://xxx.xxx.xxx/afs/serverbasedigital/boardfileservice/GetDigitalWebServer')
                     .then(function (response) {
                         if (response.ok) return response.json();
                     })
